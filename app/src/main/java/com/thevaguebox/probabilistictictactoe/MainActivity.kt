@@ -38,6 +38,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleMove(button: Button, row: Int, col: Int, tvRemaining: TextView, tvPlayerTurn: TextView) {
+        if((remainingX == 0 && remainingO == 1) || (remainingX == 1 && remainingO == 0)) {
+            showWinnerDialog("No winners in the round!")
+        }
+
         if (gameState[row][col] == "" && (remainingX > 0 || remainingO > 0)) {
             gameState[row][col] = currentSymbol
             button.text = currentSymbol
@@ -48,7 +52,6 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            // Switch player
             currentPlayer = if (currentPlayer == 1) 2 else 1
             currentSymbol = getNextSymbol()
 
