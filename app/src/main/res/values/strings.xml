@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ProbabilisticTicTacToe</string>
+    <string name="app_name">PicPacPoe</string>
     <string name="player_1_s_turn_assigned_x">Player 1\'s Turn - Assigned: X</string>
     <string name="x_5_o_5">X: 5, O: 5</string>
 </resources>
