@@ -7,4 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="gridBackground">#F5F5F5</color>
+    <color name="cellBackground">#FFFFFF</color>
+    <color name="gridLines">#B0BEC5</color>
+    <color name="turnIndicator">#6200EE</color>
 </resources>

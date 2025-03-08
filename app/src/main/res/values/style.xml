@@ -6,4 +6,12 @@
         <item name="android:textSize">24sp</item>
         <item name="android:gravity">center</item>
     </style>
+    <style name="TicTacToeCell">
+        <item name="android:layout_width">100dp</item>
+        <item name="android:layout_height">100dp</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:textSize">36sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#222222</item>
+    </style>
 </resources>

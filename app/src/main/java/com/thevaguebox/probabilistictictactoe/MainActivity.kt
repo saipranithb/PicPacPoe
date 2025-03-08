@@ -1,106 +1,176 @@
 package com.thevaguebox.probabilistictictactoe
 
-import androidx.appcompat.app.AlertDialog
+import android.app.Dialog
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.widget.Button
 import android.widget.GridLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import kotlin.random.Random
-
+import androidx.core.content.ContextCompat
+import com.airbnb.lottie.LottieAnimationView
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var board: Array<Array<Button>>
+    private lateinit var gameGrid: GridLayout
+    private lateinit var playerTurnTextView: TextView
+    private lateinit var remainingXTextView: TextView
+    private lateinit var remainingOTextView: TextView
+    private lateinit var restartButton: Button
+
+    private var gameState = Array(3) { Array(3) { "" } }
+    private var isPlayerOneTurn = true
+    private var currentSymbol = "X"
     private var remainingX = 5
     private var remainingO = 5
-    private var currentPlayer = 1
-    private var currentSymbol = "X"
-    private val gameState = Array(3) { Array(3) { "" } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val tvRemaining = findViewById<TextView>(R.id.tv_remaining)
-        val tvPlayerTurn = findViewById<TextView>(R.id.tv_player_turn)
-        val gridLayout = findViewById<GridLayout>(R.id.gridLayout)
+        gameGrid = findViewById(R.id.gameGrid)
+        playerTurnTextView = findViewById(R.id.playerTurn)
+        remainingXTextView = findViewById(R.id.remainingXText)
+        remainingOTextView = findViewById(R.id.remainingOText)
+        restartButton = findViewById(R.id.restartButton)
 
-        board = Array(3) { row ->
-            Array(3) { col ->
-                val button = gridLayout.getChildAt(row * 3 + col) as Button
-                button.setOnClickListener { handleMove(button, row, col, tvRemaining, tvPlayerTurn) }
-                button
-            }
-        }
 
-        updateUI(tvRemaining, tvPlayerTurn)
+        initializeBoard()
+        updateTurnIndicator()
     }
 
-    private fun handleMove(button: Button, row: Int, col: Int, tvRemaining: TextView, tvPlayerTurn: TextView) {
-        if((remainingX == 0 && remainingO == 1) || (remainingX == 1 && remainingO == 0)) {
-            showWinnerDialog("No winners in the round!")
+    private fun initializeBoard() {
+        gameGrid.removeAllViews()
+        for (i in 0..2) {
+            for (j in 0..2) {
+                val cell = Button(this).apply {
+                    layoutParams = GridLayout.LayoutParams().apply {
+                        width = 0
+                        height = 0
+                        rowSpec = GridLayout.spec(i, 1f)
+                        columnSpec = GridLayout.spec(j, 1f)
+                        setMargins(6, 6, 6, 6)
+                    }
+                    textSize = 32f
+                    setTextColor(Color.BLACK)
+                    background = ContextCompat.getDrawable(this@MainActivity, R.drawable.cell_background)
+                    setOnClickListener { handleMove(i, j, this) }
+                }
+                gameGrid.addView(cell)
+            }
         }
+    }
 
-        if (gameState[row][col] == "" && (remainingX > 0 || remainingO > 0)) {
+    private fun handleMove(row: Int, col: Int, button: Button) {
+        if (gameState[row][col] == "") {
             gameState[row][col] = currentSymbol
             button.text = currentSymbol
-            if (currentSymbol == "X") remainingX-- else remainingO--
 
-            if (checkWin(currentSymbol)) {
-                showWinnerDialog("Player $currentPlayer won as $currentSymbol!")
+            // Smooth Scale Animation
+            button.scaleX = 0.8f
+            button.scaleY = 0.8f
+            button.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+
+            if (checkWinner()) {
+                showWinnerDialog("Player ${if (isPlayerOneTurn) "1" else "2"} wins as $currentSymbol!")
                 return
             }
 
-            currentPlayer = if (currentPlayer == 1) 2 else 1
-            currentSymbol = getNextSymbol()
+            if (isBoardFull()) {
+                showWinnerDialog("No winner in the round!")
+                return
+            }
 
-            updateUI(tvRemaining, tvPlayerTurn)
+            switchTurn()
+            updateTurnIndicator()
         }
     }
 
-    private fun getNextSymbol(): String {
-        val totalRemaining = remainingX + remainingO
-        return if (totalRemaining == 0) ""
-        else if (Random.nextDouble() < remainingX.toDouble() / totalRemaining) "X" else "O"
+    private fun switchTurn() {
+        isPlayerOneTurn = !isPlayerOneTurn
+
+        // Update remaining symbols
+        if (currentSymbol == "X") remainingX-- else remainingO--
+
+        // Randomly assign X or O for the new turn
+        if ((remainingX > 0 && remainingO > 0)) {
+            currentSymbol = if ((1..(remainingO+remainingX)).random() <= remainingX) "X" else "O"
+        } else if (remainingX > 0) {
+            currentSymbol = "X"
+        } else {
+            currentSymbol = "O"
+        }
     }
 
-    private fun checkWin(symbol: String): Boolean {
+    private fun updateTurnIndicator() {
+        val playerText = if (isPlayerOneTurn) "Player 1" else "Player 2"
+        val symbolText = if (currentSymbol == "X") "X" else "O"
+
+        playerTurnTextView.text = "$playerText's Turn ($symbolText)"
+        remainingXTextView.text = "X: $remainingX"
+        remainingOTextView.text = "O: $remainingO"
+
+        restartButton.setOnClickListener{resetGame()}
+
+
+        // Smooth fade-in effect
+        playerTurnTextView.alpha = 0f
+        playerTurnTextView.animate().alpha(1f).setDuration(300).start()
+    }
+
+    private fun checkWinner(): Boolean {
+        // Check rows and columns
         for (i in 0..2) {
-            if ((gameState[i][0] == symbol && gameState[i][1] == symbol && gameState[i][2] == symbol) ||
-                (gameState[0][i] == symbol && gameState[1][i] == symbol && gameState[2][i] == symbol)) {
-                return true
+            if (gameState[i][0] == gameState[i][1] && gameState[i][1] == gameState[i][2] && gameState[i][0] != "") return true
+            if (gameState[0][i] == gameState[1][i] && gameState[1][i] == gameState[2][i] && gameState[0][i] != "") return true
+        }
+        // Check diagonals
+        if (gameState[0][0] == gameState[1][1] && gameState[1][1] == gameState[2][2] && gameState[0][0] != "") return true
+        if (gameState[0][2] == gameState[1][1] && gameState[1][1] == gameState[2][0] && gameState[0][2] != "") return true
+
+        return false
+    }
+
+    private fun isBoardFull(): Boolean {
+        for (row in gameState) {
+            for (cell in row) {
+                if (cell == "") return false
             }
         }
-        return (gameState[0][0] == symbol && gameState[1][1] == symbol && gameState[2][2] == symbol) ||
-                (gameState[0][2] == symbol && gameState[1][1] == symbol && gameState[2][0] == symbol)
+        return true
     }
 
     private fun showWinnerDialog(message: String) {
-        AlertDialog.Builder(this)
-            .setTitle("Game Over")
-            .setMessage(message)
-            .setPositiveButton("Restart") { _, _ -> resetGame() }
-            .setCancelable(false)
-            .show()
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_winner)
+
+        val messageText = dialog.findViewById<TextView>(R.id.winnerMessage)
+        val closeButton = dialog.findViewById<Button>(R.id.closeButton)
+        val confettiAnimation = dialog.findViewById<LottieAnimationView>(R.id.confettiAnimation)
+
+        messageText.text = message
+
+        confettiAnimation.playAnimation()
+
+        dialog.setCancelable(false)
+
+        closeButton.setOnClickListener {
+            dialog.dismiss()
+            resetGame()
+        }
+
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.show()
     }
 
     private fun resetGame() {
+        gameState = Array(3) { Array(3) { "" } }
+        isPlayerOneTurn = true
         remainingX = 5
         remainingO = 5
-        currentPlayer = 1
         currentSymbol = "X"
-        for (i in 0..2) {
-            for (j in 0..2) {
-                gameState[i][j] = ""
-                board[i][j].text = ""
-            }
-        }
-        updateUI(findViewById(R.id.tv_remaining), findViewById(R.id.tv_player_turn))
-    }
-
-    private fun updateUI(tvRemaining: TextView, tvPlayerTurn: TextView) {
-        tvRemaining.text = "X: $remainingX, O: $remainingO"
-        tvPlayerTurn.text = "Player $currentPlayer's Turn - Assigned: $currentSymbol"
+        initializeBoard()
+        updateTurnIndicator()
     }
 }
