@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Handler
 import android.widget.Button
 import android.widget.GridLayout
 import android.widget.TextView
@@ -25,6 +26,8 @@ class MainActivity : AppCompatActivity() {
     private var remainingX = 5
     private var remainingO = 5
 
+    private var isComputerMode = false  //Update: Choose between two modes
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -35,6 +38,7 @@ class MainActivity : AppCompatActivity() {
         remainingOTextView = findViewById(R.id.remainingOText)
         restartButton = findViewById(R.id.restartButton)
 
+        isComputerMode = intent.getStringExtra("mode") == "computer"
 
         initializeBoard()
         updateTurnIndicator()
@@ -67,13 +71,15 @@ class MainActivity : AppCompatActivity() {
             gameState[row][col] = currentSymbol
             button.text = currentSymbol
 
-            // Smooth Scale Animation
             button.scaleX = 0.8f
             button.scaleY = 0.8f
             button.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
 
             if (checkWinner()) {
-                showWinnerDialog("Player ${if (isPlayerOneTurn) "1" else "2"} wins as $currentSymbol!")
+                if(!isComputerMode)
+                    showWinnerDialog("Player ${if (isPlayerOneTurn) "1" else "2"} wins as $currentSymbol!")
+                else
+                    showWinnerDialog("${if (isPlayerOneTurn) "Player 1" else "Computer"} wins as $currentSymbol!")
                 return
             }
 
@@ -84,6 +90,11 @@ class MainActivity : AppCompatActivity() {
 
             switchTurn()
             updateTurnIndicator()
+
+            // If playing against AI, let the computer move after a short delay
+            if (isComputerMode && !isPlayerOneTurn) {
+                Handler().postDelayed({ computerMove() }, 500)
+            }
         }
     }
 
@@ -93,9 +104,11 @@ class MainActivity : AppCompatActivity() {
         // Update remaining symbols
         if (currentSymbol == "X") remainingX-- else remainingO--
 
-        // Randomly assign X or O for the new turn
+        // Randomly assign X or O for the new turn based on Probability
+        // The way it's done will be, a random number is chosen between 1 and the sum of X and Os.
+        // If the
         if ((remainingX > 0 && remainingO > 0)) {
-            currentSymbol = if ((1..(remainingO+remainingX)).random() <= remainingX) "X" else "O"
+            currentSymbol = if ((1..(remainingO + remainingX)).random() <= remainingX) "X" else "O"
         } else if (remainingX > 0) {
             currentSymbol = "X"
         } else {
@@ -103,16 +116,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun computerMove() {
+        val emptyCells = mutableListOf<Pair<Int, Int>>()
+        for (i in 0..2) {
+            for (j in 0..2) {
+                if (gameState[i][j] == "") {
+                    emptyCells.add(Pair(i, j))
+                }
+            }
+        }
+
+        if (emptyCells.isNotEmpty()) {
+            val (row, col) = emptyCells.random() // Pick a random move
+            val buttonIndex = row * 3 + col
+            val button = gameGrid.getChildAt(buttonIndex) as Button
+            handleMove(row, col, button)
+        }
+    }
+
     private fun updateTurnIndicator() {
-        val playerText = if (isPlayerOneTurn) "Player 1" else "Player 2"
-        val symbolText = if (currentSymbol == "X") "X" else "O"
+        val playerText = if (isPlayerOneTurn) "Player 1" else if (isComputerMode) "Computer" else "Player 2"
+        val symbolText = currentSymbol
 
         playerTurnTextView.text = "$playerText's Turn ($symbolText)"
         remainingXTextView.text = "X: $remainingX"
         remainingOTextView.text = "O: $remainingO"
 
-        restartButton.setOnClickListener{resetGame()}
-
+        restartButton.setOnClickListener { resetGame() }
 
         // Smooth fade-in effect
         playerTurnTextView.alpha = 0f
@@ -150,7 +180,6 @@ class MainActivity : AppCompatActivity() {
         val confettiAnimation = dialog.findViewById<LottieAnimationView>(R.id.confettiAnimation)
 
         messageText.text = message
-
         confettiAnimation.playAnimation()
 
         dialog.setCancelable(false)
