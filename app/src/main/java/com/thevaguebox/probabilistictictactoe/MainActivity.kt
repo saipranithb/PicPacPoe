@@ -1,5 +1,6 @@
 package com.thevaguebox.probabilistictictactoe
 
+import android.app.Activity
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -12,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.airbnb.lottie.LottieAnimationView
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     private lateinit var gameGrid: GridLayout
     private lateinit var playerTurnTextView: TextView
@@ -26,7 +27,40 @@ class MainActivity : AppCompatActivity() {
     private var remainingX = 5
     private var remainingO = 5
 
-    private var isComputerMode = false  //Update: Choose between two modes
+    private var isComputerMode = false
+
+    private fun isWinningMove(symbol: String, row: Int, col: Int): Boolean {
+        val tempBoard = gameState.map { it.clone() }.toTypedArray()
+        tempBoard[row][col] = symbol
+        // Check rows
+        for (i in 0..2) {
+            if (tempBoard[i][0] == symbol && tempBoard[i][1] == symbol && tempBoard[i][2] == symbol) return true
+        }
+        // Check columns
+        for (j in 0..2) {
+            if (tempBoard[0][j] == symbol && tempBoard[1][j] == symbol && tempBoard[2][j] == symbol) return true
+        }
+        // Check diagonals
+        if (tempBoard[0][0] == symbol && tempBoard[1][1] == symbol && tempBoard[2][2] == symbol) return true
+        if (tempBoard[0][2] == symbol && tempBoard[1][1] == symbol && tempBoard[2][0] == symbol) return true
+        return false
+    }
+
+    private fun getEmptyCells(): List<Pair<Int, Int>> {
+        val emptyCells = mutableListOf<Pair<Int, Int>>()
+        for (i in 0..2) {
+            for (j in 0..2) {
+                if (gameState[i][j] == "") emptyCells.add(Pair(i, j))
+            }
+        }
+        return emptyCells
+    }
+
+    private fun makeMove(row: Int, col: Int) {
+        val buttonIndex = row * 3 + col
+        val button = gameGrid.getChildAt(buttonIndex) as Button
+        handleMove(row, col, button)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -116,7 +150,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun computerMove() {
+    /*private fun computerMove() {
         val emptyCells = mutableListOf<Pair<Int, Int>>()
         for (i in 0..2) {
             for (j in 0..2) {
@@ -132,6 +166,58 @@ class MainActivity : AppCompatActivity() {
             val button = gameGrid.getChildAt(buttonIndex) as Button
             handleMove(row, col, button)
         }
+    }*/
+
+    private fun computerMove() {
+        val emptyCells = getEmptyCells()
+        if (emptyCells.isEmpty()) return
+
+        // 1. Check for immediate win
+        for ((row, col) in emptyCells) {
+            if (isWinningMove(currentSymbol, row, col)) {
+                makeMove(row, col)
+                return
+            }
+        }
+
+        // 2. Block player's win
+        val opponentSymbol = if (currentSymbol == "X") "O" else "X"
+        for ((row, col) in emptyCells) {
+            if (isWinningMove(opponentSymbol, row, col)) {
+                makeMove(row, col)
+                return
+            }
+        }
+
+        // 3. Strategic positions
+        val center = Pair(1, 1)
+        val corners = listOf(Pair(0, 0), Pair(0, 2), Pair(2, 0), Pair(2, 2))
+        val edges = listOf(Pair(0, 1), Pair(1, 0), Pair(1, 2), Pair(2, 1))
+
+        // Center first
+        if (emptyCells.contains(center)) {
+            makeMove(center.first, center.second)
+            return
+        }
+
+        // Random corners
+        for (corner in corners.shuffled()) {
+            if (emptyCells.contains(corner)) {
+                makeMove(corner.first, corner.second)
+                return
+            }
+        }
+
+        // Random edges
+        for (edge in edges.shuffled()) {
+            if (emptyCells.contains(edge)) {
+                makeMove(edge.first, edge.second)
+                return
+            }
+        }
+
+        // Fallback (should never execute)
+        makeMove(emptyCells.random().first, emptyCells.random().second)
     }
 
     private fun updateTurnIndicator() {
