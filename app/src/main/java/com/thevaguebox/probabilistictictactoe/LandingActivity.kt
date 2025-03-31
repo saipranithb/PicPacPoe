@@ -1,11 +1,12 @@
 package com.thevaguebox.probabilistictictactoe
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
-class LandingActivity : AppCompatActivity() {
+class LandingActivity : Activity() {
     private lateinit var btnOffline: Button
     private lateinit var btnComputer: Button
     override fun onCreate(savedInstanceState: Bundle?) {

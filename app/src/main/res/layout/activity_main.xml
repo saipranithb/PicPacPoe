@@ -69,8 +69,8 @@
         android:padding="10dp"
         android:rowCount="3"
         android:columnCount="3"
-        android:background="@color/gridBackground"
-        android:elevation="4dp"
+        android:background="@drawable/grid_background"
+        android:elevation="8dp"
         android:layout_margin="16dp">
 
 
