@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:text="OK"
         android:textAllCaps="false"
-        android:background="@drawable/button_bg"
-        android:textColor="@android:color/white"
+        android:background="@drawable/gradient_button"
+        android:textColor="@android:color/black"
         android:padding="10dp" />
 </LinearLayout>
