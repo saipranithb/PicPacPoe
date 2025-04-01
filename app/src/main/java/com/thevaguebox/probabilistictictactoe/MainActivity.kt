@@ -4,10 +4,14 @@ import android.app.Activity
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
+import android.view.View
+import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.GridLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -17,9 +21,17 @@ class MainActivity : Activity() {
 
     private lateinit var gameGrid: GridLayout
     private lateinit var playerTurnTextView: TextView
-    private lateinit var remainingXTextView: TextView
-    private lateinit var remainingOTextView: TextView
+    //private lateinit var remainingXTextView: TextView
+    //private lateinit var remainingOTextView: TextView
     private lateinit var restartButton: Button
+    private lateinit var progressX: ProgressBar
+    private lateinit var progressO: ProgressBar
+
+    private lateinit var turnIndicatorAnimationP1: LottieAnimationView
+    private lateinit var turnIndicatorAnimationP2: LottieAnimationView
+
+    private lateinit var symbolIndicatorX: LottieAnimationView
+    private lateinit var symbolIndicatorO: LottieAnimationView
 
     private var gameState = Array(3) { Array(3) { "" } }
     private var isPlayerOneTurn = true
@@ -66,10 +78,21 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        progressX = findViewById(R.id.progressX)
+        progressO = findViewById(R.id.progressO)
+
+        turnIndicatorAnimationP1 = findViewById(R.id.turnIndicatorAnimationP1)
+        turnIndicatorAnimationP2 = findViewById(R.id.turnIndicatorAnimationP2)
+
+        symbolIndicatorX = findViewById(R.id.symbolIndicatorX)
+        symbolIndicatorO = findViewById(R.id.symbolIndicatorO)
+
         gameGrid = findViewById(R.id.gameGrid)
         playerTurnTextView = findViewById(R.id.playerTurn)
-        remainingXTextView = findViewById(R.id.remainingXText)
-        remainingOTextView = findViewById(R.id.remainingOText)
+
+        //remainingXTextView = findViewById(R.id.remainingXText)
+        //remainingOTextView = findViewById(R.id.remainingOText)
+
         restartButton = findViewById(R.id.restartButton)
 
         isComputerMode = intent.getStringExtra("mode") == "computer"
@@ -80,6 +103,14 @@ class MainActivity : Activity() {
 
     private fun initializeBoard() {
         gameGrid.removeAllViews()
+        progressX.progress = (remainingX / 5f * 100).toInt() // Updates as Xs deplete
+        progressO.progress = (remainingO / 5f * 100).toInt() // Updates as Os deplete
+
+        symbolIndicatorX.visibility = View.VISIBLE
+        symbolIndicatorX.playAnimation()
+        symbolIndicatorO.visibility = View.INVISIBLE
+        symbolIndicatorO.pauseAnimation()
+
         for (i in 0..2) {
             for (j in 0..2) {
                 val cell = Button(this).apply {
@@ -107,7 +138,19 @@ class MainActivity : Activity() {
 
             button.scaleX = 0.8f
             button.scaleY = 0.8f
-            button.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+            //button.animate().scaleX(1f).scaleY(1f).setDuration(150).start()
+
+            button.animate()
+                .scaleX(0.9f)
+                .scaleY(0.9f)
+                .setDuration(100)
+                .withEndAction {
+                    button.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setInterpolator(OvershootInterpolator())
+                        .start()
+                }.start()
 
             if (checkWinner()) {
                 if(!isComputerMode)
@@ -224,9 +267,51 @@ class MainActivity : Activity() {
         val playerText = if (isPlayerOneTurn) "Player 1" else if (isComputerMode) "Computer" else "Player 2"
         val symbolText = currentSymbol
 
+        progressX.progress = (remainingX / 5f * 100).toInt() // Updates as Xs deplete
+        progressO.progress = (remainingO / 5f * 100).toInt() // Updates as Os deplete
+
+        if (currentSymbol == "X") {
+            symbolIndicatorX.visibility = View.VISIBLE
+            symbolIndicatorX.playAnimation()
+            symbolIndicatorO.visibility = View.INVISIBLE
+            symbolIndicatorO.pauseAnimation()
+        } else {
+            symbolIndicatorO.visibility = View.VISIBLE
+            symbolIndicatorO.playAnimation()
+            symbolIndicatorX.visibility = View.INVISIBLE
+            symbolIndicatorX.pauseAnimation()
+        }
+
         playerTurnTextView.text = "$playerText's Turn ($symbolText)"
-        remainingXTextView.text = "X: $remainingX"
-        remainingOTextView.text = "O: $remainingO"
+
+        //remainingXTextView.text = "X: $remainingX"
+        //remainingOTextView.text = "O: $remainingO"
+
+        if (isComputerMode) {
+            if (isPlayerOneTurn) {
+                turnIndicatorAnimationP1.visibility = View.VISIBLE
+                turnIndicatorAnimationP1.playAnimation()
+                turnIndicatorAnimationP2.visibility = View.INVISIBLE
+                turnIndicatorAnimationP2.pauseAnimation()
+            } else {
+                turnIndicatorAnimationP2.visibility = View.VISIBLE
+                turnIndicatorAnimationP2.playAnimation()
+                turnIndicatorAnimationP1.visibility = View.INVISIBLE
+                turnIndicatorAnimationP1.pauseAnimation()
+            }
+        } else {
+            if (isPlayerOneTurn) {
+                turnIndicatorAnimationP1.visibility = View.VISIBLE
+                turnIndicatorAnimationP1.playAnimation()
+                turnIndicatorAnimationP2.visibility = View.INVISIBLE
+                turnIndicatorAnimationP2.pauseAnimation()
+            } else {
+                turnIndicatorAnimationP2.visibility = View.VISIBLE
+                turnIndicatorAnimationP2.playAnimation()
+                turnIndicatorAnimationP1.visibility = View.INVISIBLE
+                turnIndicatorAnimationP1.pauseAnimation()
+            }
+        }
 
         restartButton.setOnClickListener { resetGame() }
 
@@ -258,6 +343,9 @@ class MainActivity : Activity() {
     }
 
     private fun showWinnerDialog(message: String) {
+        val mediaPlayer = MediaPlayer.create(this, R.raw.win_sound)
+        mediaPlayer.start()
+
         val dialog = Dialog(this)
         dialog.setContentView(R.layout.dialog_winner)
 
