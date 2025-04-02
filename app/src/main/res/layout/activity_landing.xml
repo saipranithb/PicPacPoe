@@ -1,44 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp"
-    android:background="@android:color/white">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pic-Pac-Poe!"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:fontFamily="@font/pstp"
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_img" />
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="16dp">
 
-        android:layout_marginBottom="24dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pic-Pac-Poe!"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:fontFamily="@font/pstp"
 
-    <Button
-        android:id="@+id/btnOffline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/pstp"
-        android:text="Play with Opponent (Offline)"
-        android:padding="12dp"
-        android:textSize="10sp"
-        android:background="@drawable/gradient_button"
-        android:textColor="@android:color/black"
-        android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="24dp"/>
 
-    <Button
-        android:id="@+id/btnComputer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Play with Computer"
-        android:fontFamily="@font/pstp"
-        android:padding="12dp"
-        android:textSize="10sp"
-        android:background="@drawable/gradient_button"
-        android:textColor="@android:color/black"/>
-</LinearLayout>
+        <Button
+            android:id="@+id/btnOffline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pstp"
+            android:text="Play with Opponent (Offline)"
+            android:padding="12dp"
+            android:textSize="10sp"
+            android:background="@drawable/gradient_button"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnComputer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Play with Computer"
+            android:fontFamily="@font/pstp"
+            android:padding="12dp"
+            android:textSize="10sp"
+            android:background="@drawable/gradient_button"
+            android:textColor="@android:color/black"/>
+    </LinearLayout>
+
+</FrameLayout>
