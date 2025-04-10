@@ -13,7 +13,6 @@ import android.widget.Button
 import android.widget.GridLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.airbnb.lottie.LottieAnimationView
 
@@ -33,13 +32,18 @@ class MainActivity : Activity() {
     private lateinit var symbolIndicatorX: LottieAnimationView
     private lateinit var symbolIndicatorO: LottieAnimationView
 
+    private lateinit var qLearningAgent: QLearningAgent
+
+
+    private lateinit var trainingManager: TrainingManager
+
     private var gameState = Array(3) { Array(3) { "" } }
     private var isPlayerOneTurn = true
     private var currentSymbol = "X"
     private var remainingX = 5
     private var remainingO = 5
 
-    private var isComputerMode = false
+    private var isComputerMode = 0
 
     private fun isWinningMove(symbol: String, row: Int, col: Int): Boolean {
         val tempBoard = gameState.map { it.clone() }.toTypedArray()
@@ -76,7 +80,15 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        trainingManager = TrainingManager(this)
+        trainingManager.loadWeights()
+
+        qLearningAgent = trainingManager.agent
+
         setContentView(R.layout.activity_main)
+
+
 
         progressX = findViewById(R.id.progressX)
         progressO = findViewById(R.id.progressO)
@@ -95,7 +107,8 @@ class MainActivity : Activity() {
 
         restartButton = findViewById(R.id.restartButton)
 
-        isComputerMode = intent.getStringExtra("mode") == "computer"
+        if (intent.getStringExtra("mode") == "computer") isComputerMode = 1
+        if (intent.getStringExtra("mode") == "computerRL") isComputerMode = 2
 
         initializeBoard()
         updateTurnIndicator()
@@ -153,7 +166,7 @@ class MainActivity : Activity() {
                 }.start()
 
             if (checkWinner()) {
-                if(!isComputerMode)
+                if(isComputerMode == 0)
                     showWinnerDialog("Player ${if (isPlayerOneTurn) "1" else "2"} wins as $currentSymbol!")
                 else
                     showWinnerDialog("${if (isPlayerOneTurn) "Player 1" else "Computer"} wins as $currentSymbol!")
@@ -169,8 +182,11 @@ class MainActivity : Activity() {
             updateTurnIndicator()
 
             // If playing against AI, let the computer move after a short delay
-            if (isComputerMode && !isPlayerOneTurn) {
-                Handler().postDelayed({ computerMove() }, 500)
+            if (!isPlayerOneTurn) {
+                if(isComputerMode == 1 )
+                    Handler().postDelayed({ computerMove() }, 500)
+                else if (isComputerMode == 2)
+                    Handler().postDelayed({ computerRLMove() }, 500)
             }
         }
     }
@@ -263,8 +279,24 @@ class MainActivity : Activity() {
         makeMove(emptyCells.random().first, emptyCells.random().second)
     }
 
+    private fun computerRLMove() {
+        val emptyCells = getEmptyCells()
+        if (emptyCells.isEmpty()) return
+
+        val bestMove = emptyCells.maxByOrNull { (row, col) ->
+            val tempBoard = gameState.map { it.clone() }.toTypedArray()
+            tempBoard[row][col] = currentSymbol
+            qLearningAgent.computeQValue(FeatureExtractor().getFeatures(tempBoard, currentSymbol))
+            trainingManager.agent.computeQValue(
+                FeatureExtractor().getFeatures(tempBoard, currentSymbol)
+            )
+        }
+
+        bestMove?.let { (row, col) -> makeMove(row, col) }
+    }
+
     private fun updateTurnIndicator() {
-        val playerText = if (isPlayerOneTurn) "Player 1" else if (isComputerMode) "Computer" else "Player 2"
+        val playerText = if (isPlayerOneTurn) "Player 1" else if (isComputerMode != 0) "Computer" else "Player 2"
         val symbolText = currentSymbol
 
         progressX.progress = (remainingX / 5f * 100).toInt() // Updates as Xs deplete
@@ -287,7 +319,7 @@ class MainActivity : Activity() {
         //remainingXTextView.text = "X: $remainingX"
         //remainingOTextView.text = "O: $remainingO"
 
-        if (isComputerMode) {
+        if (isComputerMode != 0) {
             if (isPlayerOneTurn) {
                 turnIndicatorAnimationP1.visibility = View.VISIBLE
                 turnIndicatorAnimationP1.playAnimation()

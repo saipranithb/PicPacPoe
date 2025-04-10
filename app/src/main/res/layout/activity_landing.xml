@@ -43,12 +43,38 @@
             android:id="@+id/btnComputer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Play with Computer"
+            android:text="Play with Computer (AI)"
             android:fontFamily="@font/pstp"
             android:padding="12dp"
             android:textSize="10sp"
             android:background="@drawable/gradient_button"
-            android:textColor="@android:color/black"/>
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnComputerRL"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Play with Computer (RL)"
+            android:fontFamily="@font/pstp"
+            android:padding="12dp"
+            android:textSize="10sp"
+            android:background="@drawable/gradient_button"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnTrain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Train the RL Agent"
+            android:fontFamily="@font/pstp"
+            android:padding="12dp"
+            android:textSize="10sp"
+            android:background="@drawable/gradient_button_different"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="16dp"/>
+
     </LinearLayout>
 
 </FrameLayout>
